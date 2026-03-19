@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Idul Fitri — Pulang</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Noto+Serif:wght@400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{overflow:hidden;background:#000;touch-action:none;-webkit-user-select:none;user-select:none;}
+canvas{display:block;width:100vw;height:100vh;}
+
+/* CROSSHAIR */
+#xhair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:14px;height:14px;pointer-events:none;z-index:10;opacity:.6;}
+#xhair::before,#xhair::after{content:'';position:absolute;background:rgba(255,215,130,.9);border-radius:1px;}
+#xhair::before{width:2px;height:100%;left:50%;transform:translateX(-50%);}
+#xhair::after{width:100%;height:2px;top:50%;transform:translateY(-50%);}
+
+/* MISSION BULLETIN */
+#mission{position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:20;pointer-events:none;
+  background:rgba(8,5,2,.78);border:1px solid rgba(200,155,55,.4);
+  border-radius:10px;padding:8px 20px 9px;text-align:center;
+  backdrop-filter:blur(8px);min-width:200px;max-width:82vw;
+  transition:opacity .5s;}
+#mission-label{font-family:'Lora',serif;font-size:9px;letter-spacing:3px;
+  text-transform:uppercase;color:rgba(200,155,55,.6);margin-bottom:3px;}
+#mission-text{font-family:'Lora',serif;font-style:italic;font-size:clamp(11px,2.2vw,13px);
+  color:rgba(255,218,150,.92);line-height:1.4;}
+
+/* HINT */
+#hint{position:fixed;bottom:22%;left:50%;transform:translateX(-50%);
+  background:rgba(5,2,0,.85);border:1px solid rgba(200,155,55,.5);
+  border-radius:10px;padding:9px 22px;font-family:'Lora',serif;font-size:13px;
+  color:rgba(255,215,130,.95);display:none;z-index:15;pointer-events:none;
+  text-align:center;backdrop-filter:blur(6px);}
+
+/* DIALOG */
+#dialog{position:fixed;bottom:10%;left:50%;transform:translateX(-50%);
+  width:min(560px,88vw);text-align:center;z-index:15;pointer-events:none;}
+#dtext{display:none;font-family:'Lora',serif;font-style:italic;
+  font-size:clamp(13px,2.5vw,16px);color:rgba(255,228,155,.97);
+  text-shadow:0 2px 16px #000;background:rgba(0,0,0,.55);
+  border-radius:8px;padding:9px 16px;line-height:1.8;}
+
+/* FADE */
+#fade{position:fixed;inset:0;background:#000;z-index:80;pointer-events:none;opacity:1;transition:opacity 2s ease;}
+#bt,#bb{position:fixed;left:0;right:0;background:#000;height:0;z-index:70;pointer-events:none;}
+#bt{top:0;}#bb{bottom:0;}
+
+/* LETTER */
+#lw{position:fixed;inset:0;z-index:60;background:rgba(10,6,2,.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;padding:14px;overflow-y:auto;}
+#li{background:#fef6e4;max-width:580px;width:100%;max-height:90vh;overflow-y:auto;border-radius:4px;
+  padding:clamp(14px,4vw,38px) clamp(14px,4vw,40px);box-shadow:0 0 80px rgba(0,0,0,.85);
+  position:relative;border:1px solid rgba(175,128,58,.3);}
+#li::before{content:'';position:absolute;inset:7px;border:1px solid rgba(175,128,58,.14);pointer-events:none;border-radius:2px;}
+/* Landscape mode: wider panel, smaller padding so text fits */
+@media (orientation:landscape) and (max-height:500px){
+  #lw{padding:8px;}
+  #li{max-width:92vw;max-height:96vh;padding:14px 22px;}
+  .lorn{margin-bottom:5px;font-size:14px;}
+  .lhd{margin-bottom:10px;}
+  #lbody{font-size:12px;line-height:1.75;}
+  #lbtn{margin-top:14px;padding:7px 22px;}
+}
+.lorn{text-align:center;font-size:18px;opacity:.5;margin-bottom:10px;}
+.lhd{text-align:center;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#c9943a;opacity:.75;margin-bottom:18px;}
+#lbody{font-family:'Noto Serif',serif;font-size:clamp(12px,2vw,14px);line-height:2;color:#3a2510;white-space:pre-line;}
+#lbtn{display:block;margin:24px auto 0;padding:9px 28px;background:transparent;
+  border:1px solid rgba(175,128,58,.5);border-radius:4px;font-family:'Lora',serif;
+  font-size:12px;letter-spacing:2px;color:#5c3a1e;cursor:pointer;transition:background .25s;}
+#lbtn:hover,#lbtn:active{background:rgba(200,150,50,.12);}
+
+/* MORAL SCREEN */
+#moral{position:fixed;inset:0;background:#000;z-index:88;display:none;
+  flex-direction:column;align-items:center;justify-content:center;
+  padding:clamp(24px,6vw,60px);opacity:0;transition:opacity 2s ease;}
+#moral-inner{max-width:560px;width:100%;text-align:center;}
+#moral-title{font-family:'Lora',serif;font-size:clamp(11px,2vw,13px);
+  letter-spacing:4px;text-transform:uppercase;color:rgba(200,155,55,.5);
+  margin-bottom:22px;}
+#moral-lines{font-family:'Noto Serif',serif;font-size:clamp(14px,2.5vw,18px);
+  line-height:2.1;color:rgba(255,228,170,.88);white-space:pre-line;
+  text-align:center;transition:opacity 0.7s ease;}
+#moral-sub{margin-top:28px;font-family:'Lora',serif;font-style:italic;
+  font-size:clamp(11px,1.8vw,13px);color:rgba(200,155,55,.45);
+  letter-spacing:1px;}
+
+/* CREDITS */
+#credits{position:fixed;inset:0;background:#000;z-index:90;display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:16px;opacity:0;transition:opacity 2.5s ease;}
+#cby{font-family:'Lora',serif;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:rgba(255,200,100,.38);}
+#cname{font-family:'Lora',serif;font-style:italic;font-size:clamp(28px,7vw,54px);color:rgba(255,210,125,.9);letter-spacing:3px;}
+#cline{width:52px;height:1px;background:rgba(200,150,50,.32);}
+#cpoem{font-family:'Noto Serif',serif;font-size:clamp(12px,2vw,14px);line-height:2;
+  color:rgba(255,200,100,.6);text-align:center;white-space:pre-line;margin-top:4px;}
+
+/* LOADING */
+#loading{position:fixed;inset:0;background:#060300;z-index:100;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:13px;}
+#loading h1{font-family:'Lora',serif;font-style:italic;font-size:clamp(22px,6vw,40px);color:rgba(255,200,110,.85);letter-spacing:2px;}
+#loading p{font-family:'Lora',serif;font-size:10px;letter-spacing:4px;color:rgba(255,170,60,.32);text-transform:uppercase;}
+#loading-landscape{font-family:'Lora',serif;font-size:clamp(10px,2vw,12px);
+  color:rgba(255,200,100,.28);letter-spacing:1.5px;text-align:center;
+  margin-top:4px;padding:0 24px;line-height:1.6;}
+#lbar{width:155px;height:1px;background:rgba(255,200,100,.1);border-radius:1px;overflow:hidden;margin-top:5px;}
+#lfill{height:100%;background:rgba(200,150,50,.7);width:0;transition:width .2s linear;}
+
+/* JOYSTICK */
+#jzone{position:fixed;bottom:22px;left:18px;width:112px;height:112px;z-index:25;display:none;touch-action:none;}
+#jbase{width:100%;height:100%;border-radius:50%;position:relative;background:rgba(255,200,100,.07);border:2px solid rgba(255,200,100,.28);}
+#jknob{width:44px;height:44px;border-radius:50%;position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);pointer-events:none;background:rgba(255,200,100,.3);border:2px solid rgba(255,200,100,.65);}
+#tapbtn{position:fixed;bottom:28px;right:18px;width:68px;height:68px;border-radius:50%;
+  background:rgba(200,150,50,.2);border:2px solid rgba(200,150,50,.58);display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:2px;z-index:25;
+  cursor:pointer;touch-action:none;color:rgba(255,210,120,.9);font-family:'Lora',serif;}
+#tapbtn .ti{font-size:22px;line-height:1;}
+#tapbtn .tl{font-size:9px;letter-spacing:1px;}
+</style>
+</head>
+<body>
+<div id="loading">
+  <h1>Pulang</h1>
+  <p>Idul Fitri</p>
+  <div id="lbar"><div id="lfill"></div></div>
+  <div id="loading-landscape">gunakan mode landscape untuk pengalaman yang lebih baik</div>
+</div>
+<canvas id="c"></canvas>
+<div id="xhair"></div>
+
+<!-- MISSION BULLETIN -->
+<div id="mission">
+  <div id="mission-label">Misi</div>
+  <div id="mission-text">…</div>
+</div>
+
+<div id="hint"></div>
+<div id="dialog"><span id="dtext"></span></div>
+<div id="fade"></div>
+<div id="bt"></div><div id="bb"></div>
+
+<div id="lw"><div id="li">
+  <div class="lorn">☽ ✦ ☾</div>
+  <div class="lhd">Selamat Hari Raya Idul Fitri 1447 H</div>
+  <div id="lbody"></div>
+  <button id="lbtn">Tutup Surat</button>
+</div></div>
+
+<!-- MORAL SCREEN -->
+<div id="moral">
+  <div id="moral-inner">
+    <div id="moral-title">✦ Pesan ✦</div>
+    <div id="moral-lines"></div>
+    <div id="moral-sub">Selamat Hari Raya Idul Fitri 1447 H</div>
+  </div>
+</div>
+
+<div id="credits">
+  <div id="cby">copyright by</div>
+  <div id="cname">Dylphiiee</div>
+  <div id="cline"></div>
+  <div id="cpoem">Pergi ke pasar membeli ketupat,
+Tidak lupa beli sirup pepaya.
+Lebaran datang hati pun hangat,
+THR-nya jangan lupa ditransfer ya.</div>
+</div>
+
+<div id="jzone"><div id="jbase"><div id="jknob"></div></div></div>
+<div id="tapbtn"><span class="ti">👆</span><span class="tl">TAP</span></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+'use strict';
+/* ══════════════ RENDERER ══════════════ */
+var MOBILE=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+var renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.0;
+
+var scene=new THREE.Scene();
+scene.background=new THREE.Color(0x080604);
+
+var cam=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.05,30);
+cam.position.set(0,1.65,3.2);
+var YAW=Math.PI, PITCH=0.05; // face -z (into room)
+
+/* ══════════════ STATE ══════════════ */
+var G={
+  phase:0, // 0=intro 1=switch 2=sit 3=letter 4=done
+  lampOn:false, seated:false, letterRead:false,
+  dialogOn:false, over:false,
+};
+var keys={};
+var jActive=false,jTid=-1,jDelta={x:0,y:0};
+var lTid=-1,lLast={x:0,y:0},lDrag=false;
+var mDown=false,mX=0,mY=0,mDrag=false;
+var isSeated=false;
+
+/* ══════════════ AUDIO (Web Audio API — no external files) ══════════════ */
+var AudioCtx=window.AudioContext||window.webkitAudioContext;
+var actx=null;
+
+function initAudio(){
+  if(actx) return;
+  actx=new AudioCtx();
+}
+
+/* Ambient: layered sine tones simulating crickets + distant hum */
+var ambNodes=[];
+function startAmbient(){
+  if(!actx) return;
+  // Master gain
+  var masterGain=actx.createGain();
+  masterGain.gain.value=0.0;
+  masterGain.connect(actx.destination);
+  // Fade in slowly
+  masterGain.gain.linearRampToValueAtTime(0.18,actx.currentTime+4);
+
+  // Low hum (room ambience)
+  var hum=actx.createOscillator();
+  hum.type='sine';
+  hum.frequency.value=55;
+  var humGain=actx.createGain(); humGain.gain.value=0.15;
+  hum.connect(humGain); humGain.connect(masterGain); hum.start();
+
+  // Cricket-like high tones with tremolo
+  [880,1320,1760,2200].forEach(function(freq,i){
+    var osc=actx.createOscillator();
+    osc.type='sine';
+    osc.frequency.value=freq;
+
+    // Tremolo LFO
+    var lfo=actx.createOscillator();
+    lfo.type='sine';
+    lfo.frequency.value=4+i*1.5;
+    var lfoGain=actx.createGain();
+    lfoGain.gain.value=0.04;
+    lfo.connect(lfoGain);
+
+    var crickGain=actx.createGain();
+    crickGain.gain.value=0.012-i*0.002;
+    lfo.connect(crickGain.gain);
+
+    osc.connect(crickGain); crickGain.connect(masterGain);
+    osc.start(); lfo.start();
+  });
+
+  // Night wind: filtered white noise
+  var bufLen=actx.sampleRate*2;
+  var buf=actx.createBuffer(1,bufLen,actx.sampleRate);
+  var data=buf.getChannelData(0);
+  for(var i=0;i<bufLen;i++) data[i]=(Math.random()*2-1);
+  var noise=actx.createBufferSource();
+  noise.buffer=buf; noise.loop=true;
+  var filter=actx.createBiquadFilter();
+  filter.type='lowpass'; filter.frequency.value=400; filter.Q.value=1;
+  var noiseGain=actx.createGain(); noiseGain.gain.value=0.04;
+  noise.connect(filter); filter.connect(noiseGain); noiseGain.connect(masterGain);
+  noise.start();
+
+  ambNodes=[hum,noise];
+}
+
+/* Footstep sound — synthesized wooden floor thud */
+var footTimer=0, footInterval=0.42, footStep=0;
+function playFootstep(){
+  if(!actx) return;
+  var g=actx.createGain();
+  g.gain.setValueAtTime(0.38,actx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+0.18);
+  g.connect(actx.destination);
+
+  // Low thump (floor body)
+  var osc=actx.createOscillator();
+  osc.type='sine';
+  // Alternate slightly for left/right feel
+  osc.frequency.setValueAtTime(footStep%2===0?120:110,actx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(40,actx.currentTime+0.12);
+  osc.connect(g); osc.start(); osc.stop(actx.currentTime+0.18);
+
+  // Scrape (shoe on wood) — short noise burst
+  var scrapeLen=actx.sampleRate*0.06|0;
+  var scrapeBuf=actx.createBuffer(1,scrapeLen,actx.sampleRate);
+  var sd=scrapeBuf.getChannelData(0);
+  for(var i=0;i<scrapeLen;i++) sd[i]=(Math.random()*2-1);
+  var scrape=actx.createBufferSource();
+  scrape.buffer=scrapeBuf;
+  var scrapeFilter=actx.createBiquadFilter();
+  scrapeFilter.type='bandpass'; scrapeFilter.frequency.value=1800; scrapeFilter.Q.value=3;
+  var scrapeGain=actx.createGain();
+  scrapeGain.gain.setValueAtTime(0.12,actx.currentTime);
+  scrapeGain.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+0.06);
+  scrape.connect(scrapeFilter); scrapeFilter.connect(scrapeGain); scrapeGain.connect(actx.destination);
+  scrape.start(); scrape.stop(actx.currentTime+0.06);
+
+  footStep++;
+}
+
+/* Click / interact sound */
+function playClick(){
+  if(!actx) return;
+  var g=actx.createGain();
+  g.gain.setValueAtTime(0.3,actx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+0.1);
+  g.connect(actx.destination);
+  var o=actx.createOscillator();
+  o.type='square'; o.frequency.value=800;
+  o.connect(g); o.start(); o.stop(actx.currentTime+0.05);
+}
+
+/* Lamp switch click + buzz */
+function playLampOn(){
+  if(!actx) return;
+  // Click
+  var g=actx.createGain();
+  g.gain.setValueAtTime(0.5,actx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+0.08);
+  g.connect(actx.destination);
+  var o=actx.createOscillator();
+  o.type='square'; o.frequency.value=200;
+  o.connect(g); o.start(); o.stop(actx.currentTime+0.08);
+  // Fluorescent buzz
+  setTimeout(function(){
+    if(!actx) return;
+    var bg=actx.createGain();
+    bg.gain.setValueAtTime(0.06,actx.currentTime);
+    bg.gain.linearRampToValueAtTime(0.0,actx.currentTime+0.8);
+    bg.connect(actx.destination);
+    var bo=actx.createOscillator();
+    bo.type='sawtooth'; bo.frequency.value=120;
+    bo.connect(bg); bo.start(); bo.stop(actx.currentTime+0.8);
+  },80);
+}
+
+/* ══════════════ NOISE ══════════════ */
+function nn(x,y,s){var v=Math.sin(x*127.1+y*311.7+(s||0))*43758.5;return v-Math.floor(v);}
+
+/* ══════════════ TEXTURES ══════════════ */
+function mkTex(w,h,fn,rx,ry){
+  var cv=document.createElement('canvas');cv.width=w;cv.height=h;
+  fn(cv.getContext('2d'),w,h);
+  var t=new THREE.CanvasTexture(cv);
+  t.wrapS=t.wrapT=THREE.RepeatWrapping;
+  if(rx)t.repeat.set(rx,ry||rx);
+  return t;
+}
+
+var TX={
+  wall: mkTex(256,256,function(ctx,w,h){
+    var id=ctx.createImageData(w,h),d=id.data;
+    for(var i=0;i<w*h;i++){var x=i%w,y=i/w|0,f=0.88+nn(x*.07,y*.07,2)*.09+nn(x*.22,y*.22,5)*.04;var p=i*4;d[p]=212*f|0;d[p+1]=198*f|0;d[p+2]=176*f|0;d[p+3]=255;}
+    ctx.putImageData(id,0,0);},2,1.5),
+
+  floor: mkTex(512,512,function(ctx,w,h){
+    var pw=128;
+    for(var row=0;row<4;row++){
+      var off=(row%2)*(pw/2)|0;
+      for(var col=-1;col<6;col++){
+        var px=col*pw+off,py=row*(h/4)|0;
+        var sh=0.62+nn(col,row,4)*.34;
+        ctx.fillStyle='rgb('+(88*sh|0)+','+(63*sh|0)+','+(35*sh|0)+')';
+        ctx.fillRect(px,py,pw-2,h/4-2);
+        ctx.strokeStyle='rgba('+(75*sh|0)+','+(52*sh|0)+','+(26*sh|0)+',.3)';
+        ctx.lineWidth=1;
+        for(var li=0;li<5;li++){var lx=px+nn(li,row,col)*pw;ctx.beginPath();ctx.moveTo(lx,py);ctx.lineTo(lx,py+h/4-2);ctx.stroke();}
+      }
+    }},3,3),
+
+  ceil: mkTex(128,128,function(ctx,w,h){
+    var id=ctx.createImageData(w,h),d=id.data;
+    for(var i=0;i<w*h;i++){var x=i%w,y=i/w|0,f=0.92+nn(x*.12,y*.12,6)*.06;var p=i*4;d[p]=238*f|0;d[p+1]=230*f|0;d[p+2]=212*f|0;d[p+3]=255;}
+    ctx.putImageData(id,0,0);},2,2),
+};
+
+/* ══════════════ MATERIALS ══════════════ */
+function sm(o){return new THREE.MeshStandardMaterial(o);}
+var M={
+  wall: sm({map:TX.wall,color:0xddd0b5,roughness:.88,metalness:0}),
+  floor:sm({map:TX.floor,color:0xc8aa74,roughness:.78,metalness:0}),
+  ceil: sm({map:TX.ceil,color:0xede0cc,roughness:.92,metalness:0}),
+  door: sm({color:0x6e3c18,roughness:.72,metalness:.04}),
+  dkw:  sm({color:0x4a2c10,roughness:.72,metalness:.02}),
+  wood: sm({color:0x8c5e2a,roughness:.75,metalness:.02}),
+  metal:sm({color:0xb0a080,roughness:.3,metalness:.85}),
+  sofa: sm({color:0x7c5040,roughness:.88,metalness:0}),
+  cush: sm({color:0xcc8c3c,roughness:.85,metalness:0}),
+  cush2:sm({color:0xa87848,roughness:.85,metalness:0}),
+  table:sm({color:0x9c5e2a,roughness:.7,metalness:.05}),
+  paper:sm({color:0xfff8e5,roughness:.9,metalness:0}),
+  env:  sm({color:0xfff0dd,roughness:.9,metalness:0}),
+  lmet: sm({color:0xd4aa58,roughness:.4,metalness:.65}),
+  lshd: new THREE.MeshStandardMaterial({color:0xffecc0,roughness:.7,metalness:0,transparent:true,opacity:.85,side:THREE.DoubleSide}),
+  glass:new THREE.MeshStandardMaterial({color:0x88aacc,roughness:.05,metalness:.2,transparent:true,opacity:.28,side:THREE.DoubleSide}),
+  rug:  sm({color:0x885c38,roughness:.95,metalness:0}),
+  swp:  sm({color:0xe5ddd0,roughness:.65,metalness:.12}),
+  pic:  sm({color:0xd5c5a5,roughness:.8,metalness:0}),
+  tvscr:new THREE.MeshBasicMaterial({color:0x030508}),
+};
+
+/* ══════════════ HELPERS ══════════════ */
+function box(w,h,d,mat){return new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);}
+function add(m,x,y,z,p){m.position.set(x,y,z);(p||scene).add(m);return m;}
+
+/* ══════════════ LIGHTS ══════════════ */
+// Dim night ambient — shapes visible, feels dark
+var ambDim=new THREE.AmbientLight(0x4455aa,0.42);
+scene.add(ambDim);
+
+// Faint moonlight from window direction
+var moonDir=new THREE.DirectionalLight(0x6677bb,0.15);
+moonDir.position.set(5,3,-2);
+scene.add(moonDir);
+
+// Ceiling light — off until switch
+var ceilPL=new THREE.PointLight(0xffe8a0,0,18);
+ceilPL.position.set(-1,3.1,-0.5);
+scene.add(ceilPL);
+
+// Warm fill — off until switch
+var fillPL=new THREE.PointLight(0xffd880,0,12);
+fillPL.position.set(1.5,2.4,1.5);
+scene.add(fillPL);
+
+// Table lamp — off until switch
+var tablePL=new THREE.PointLight(0xffcc70,0,6);
+tablePL.position.set(-1.7,1.1,-1.8);
+scene.add(tablePL);
+
+/* ══════════════ ROOM GEOMETRY ══════════════
+   X: -4..+4   Z: -4..+4   Y: 0..3.4
+   Door on front wall (z=+4), center x=0
+
+   Layout (top-down, player spawns at z≈+3.2):
+
+        z=-4 (back wall)
+   x=-4 ┌─────────────────┐ x=+4
+        │ BS   TV   [WIN] │
+        │      ║          │
+        │   [table]       │
+        │      ║          │
+        │   [SOFA→]       │
+        │                 │
+   z=+4 └────[DOOR]───────┘
+              x=0
+
+   TV on back wall (z=-4), screen faces +z (toward player)
+   Sofa center at z≈-1.5, faces back wall (+z→ toward TV... wait)
+
+   CORRECT LAYOUT:
+   TV unit against BACK wall (z≈-3.8), screen faces toward player (+z)
+   Sofa at z≈+1.0, faces BACK wall (sofa back against front wall z≈+3.8)
+   Coffee table at z≈-0.8 (between sofa and TV)
+   Player walks in, sees sofa from behind, walks around to sit facing TV
+══════════════════════════════════════════════ */
+var RW=8,RD=8,RH=3.4,WT=0.22;
+var FZ=4.0;
+
+// Floor
+add(box(RW,WT,RD,M.floor),0,-WT/2,0);
+// Ceiling
+add(box(RW,WT,RD,M.ceil),0,RH+WT/2,0);
+// Back wall
+add(box(RW,RH,WT,M.wall),0,RH/2,-FZ);
+// Left wall
+add(box(WT,RH,RD,M.wall),-FZ,RH/2,0);
+// Right wall
+add(box(WT,RH,RD,M.wall),FZ,RH/2,0);
+
+// Front wall with door hole (door: x -0.65..+0.65, h 0..2.25)
+var DW=1.3,DH=2.25,SW=(RW-DW)/2; // side panel width = 3.35
+add(box(SW,RH,WT,M.wall),-(DW/2+SW/2),RH/2,FZ);  // left panel
+add(box(SW,RH,WT,M.wall), (DW/2+SW/2),RH/2,FZ);  // right panel
+add(box(DW,RH-DH,WT,M.wall),0,DH+(RH-DH)/2,FZ);  // above door
+
+// Door frame
+var FRZ=FZ-0.01,FRT=0.12,FRD=0.22;
+add(box(FRT,DH+0.12,FRD,M.dkw),-(DW/2+FRT/2),(DH+0.12)/2,FRZ);
+add(box(FRT,DH+0.12,FRD,M.dkw), (DW/2+FRT/2),(DH+0.12)/2,FRZ);
+add(box(DW+FRT*2,FRT,FRD,M.dkw),0,DH+FRT/2,FRZ);
+
+// Door panel
+add(box(DW-0.04,DH-0.04,0.08,M.door),0,DH/2,FZ-0.08);
+add(box(0.5,0.9,0.03,M.door),-0.22,1.5,FZ-0.13);
+add(box(0.5,0.9,0.03,M.door), 0.22,1.5,FZ-0.13);
+add(box(0.5,0.6,0.03,M.door),-0.22,0.5,FZ-0.13);
+add(box(0.5,0.6,0.03,M.door), 0.22,0.5,FZ-0.13);
+add(new THREE.Mesh(new THREE.SphereGeometry(0.045,10,10),M.metal),0.52,1.05,FZ-0.13);
+
+/* ══ CEILING LAMP ══ */
+var lampG=new THREE.Group(); lampG.position.set(-1,RH,-0.5);
+var lampRod=new THREE.Mesh(new THREE.CylinderGeometry(0.022,0.022,0.3,8),M.lmet);
+lampRod.position.y=-0.15; lampG.add(lampRod);
+var lampShade=new THREE.Mesh(new THREE.ConeGeometry(0.32,0.3,16,1,true),M.lshd);
+lampShade.rotation.x=Math.PI; lampShade.position.y=-0.44; lampG.add(lampShade);
+var lampBulb=new THREE.Mesh(new THREE.SphereGeometry(0.065,10,10),new THREE.MeshBasicMaterial({color:0x1a1008}));
+lampBulb.position.y=-0.36; lampG.add(lampBulb);
+scene.add(lampG);
+
+/* ══ LIGHT SWITCH — left wall, near door ══ */
+var SW_X=-FZ+WT/2+0.015;
+var swG=new THREE.Group();
+swG.position.set(SW_X,1.32,3.0);
+swG.rotation.y=Math.PI/2;
+add(box(0.13,0.2,0.025,M.swp),0,0,0,swG);
+add(box(0.045,0.075,0.035,sm({color:0x999988,roughness:.5})),0,0.025,0.03,swG);
+var swLed=new THREE.Mesh(new THREE.SphereGeometry(0.012,6,6),new THREE.MeshBasicMaterial({color:0xff3300}));
+swLed.position.set(0,-0.055,0.028); swG.add(swLed);
+scene.add(swG);
+
+/* ══ WINDOW — right wall ══ */
+// Place window on right wall (x=+4), no z-fighting:
+// frame box sits inside wall thickness, glass plane offset inward
+var winG=new THREE.Group();
+winG.rotation.y=-Math.PI/2;
+winG.position.set(FZ-WT/2-0.005,1.85,-1.0);
+// frame as separate top/bottom/left/right strips (no solid box overlapping wall)
+add(box(1.5,0.1,WT+0.01,M.dkw),0, 0.68,0,winG);   // top bar
+add(box(1.5,0.1,WT+0.01,M.dkw),0,-0.68,0,winG);   // bottom bar + sill
+add(box(0.1,1.26,WT+0.01,M.dkw),-0.7,0,0,winG);   // left post
+add(box(0.1,1.26,WT+0.01,M.dkw), 0.7,0,0,winG);   // right post
+// Glass plane — faces into room (-z in local = +x in world after rotation)
+var glP=new THREE.Mesh(new THREE.PlaneGeometry(1.28,1.14),M.glass);
+glP.position.z=-(WT/2+0.008); glP.renderOrder=1; winG.add(glP);
+// Cross dividers
+add(box(1.28,0.06,0.04,M.dkw),0,0,-(WT/2+0.01),winG);
+add(box(0.06,1.14,0.04,M.dkw),0,0,-(WT/2+0.01),winG);
+// Sill ledge
+add(box(1.5,0.08,0.2,M.wood),0,-0.72,-0.06,winG);
+scene.add(winG);
+
+/* ══ PICTURE FRAMES on back wall ══ */
+function mkPic(x,y){
+  var g=new THREE.Group(); g.position.set(x,y,-FZ+0.05);
+  add(box(0.95,0.72,0.06,M.dkw),0,0,0,g);
+  add(box(0.85,0.62,0.04,M.pic),0,0,0.05,g);
+  scene.add(g);
+}
+mkPic(-2.2,2.1); mkPic(2.2,2.1);
+
+/* ══════════════════════════════════════════════
+   FURNITURE LAYOUT — FIXED
+   
+   TV: back wall (z=-4), screen faces +z toward player
+   Sofa: z=+1.5, rotation=0 (default), sofa back at z≈+2.0
+         → seats face -z toward TV ✓
+   Coffee table: z=-0.5 (between sofa seats z≈+1.0 and TV z≈-3.7)
+   
+   Sofa "back" piece should be at local z = +0.43 (toward front wall)
+   Sofa "seat" faces local -z direction (toward TV)
+   
+   With rotation.y = 0:
+     sofa front face = -z direction (toward TV) ✓
+     sofa back piece at z = +0.43 (toward front wall / door) ✓
+══════════════════════════════════════════════ */
+
+/* TV UNIT — on back wall */
+add(box(2.2,0.55,0.45,M.dkw),0,0.275,-3.76);          // cabinet body (lebih kecil)
+add(box(2.2,0.04,0.47,M.dkw),0,0.56,-3.76);           // cabinet top surface
+
+// Stand TV kecil — satu dudukan tengah (bukan dua kaki)
+add(box(0.55,0.05,0.28,M.metal),0,0.61,-3.74);        // base plate kecil
+add(box(0.08,0.22,0.08,M.metal),0,0.72,-3.74);        // tiang tengah pendek
+add(box(0.42,0.04,0.12,M.metal),0,0.83,-3.74);        // bracket atas (nyangga TV)
+
+// TV frame — ukuran normal, nempel di bracket
+add(box(1.5,0.88,0.08,M.metal),0,1.28,-3.73);         // TV frame
+var tvScr=new THREE.Mesh(new THREE.PlaneGeometry(1.38,0.78),M.tvscr);
+tvScr.position.set(0,1.28,-3.68); scene.add(tvScr);   // screen
+
+/* SOFA — rotation.y=0, sits at z=+1.5
+   back panel at z_local=+0.43 → world z=+1.93 (toward front wall)
+   seat faces -z (toward TV at z=-3.7) ✓ */
+var sofaG=new THREE.Group();
+sofaG.position.set(0,0,1.5);
+// sofaG.rotation.y = 0 (default) — faces -z = toward TV ✓
+add(box(2.8,0.44,0.92,M.sofa),0,0.22,0,sofaG);           // seat base
+add(box(2.8,0.68,0.18,M.sofa),0,0.68,0.43,sofaG);        // back (toward front wall)
+add(box(0.22,0.54,0.92,M.sofa),-1.22,0.27,0,sofaG);      // left arm
+add(box(0.22,0.54,0.92,M.sofa), 1.22,0.27,0,sofaG);      // right arm
+[-0.78,0,0.78].forEach(function(cx){
+  add(box(0.82,0.13,0.78,M.cush),cx,0.5,-0.02,sofaG);    // cushions face -z ✓
+});
+var tp=box(0.28,0.28,0.1,M.cush2);
+tp.position.set(0.95,0.64,0.28);tp.rotation.z=0.18;sofaG.add(tp);
+[[-1.22,0.35],[1.22,0.35],[-1.22,-0.35],[1.22,-0.35]].forEach(function(v){
+  add(box(0.08,0.14,0.08,M.dkw),v[0],0.07,v[1],sofaG);
+});
+scene.add(sofaG);
+
+/* COFFEE TABLE — between sofa (z=+1.5) and TV (z=-3.7) */
+var ctG=new THREE.Group();
+ctG.position.set(0,0.38,-0.5);
+add(box(1.35,0.08,0.68,M.table),0,0,0,ctG);
+[[-0.53,-0.24],[0.53,-0.24],[-0.53,0.24],[0.53,0.24]].forEach(function(v){
+  add(box(0.07,0.38,0.07,M.dkw),v[0],-0.23,v[1],ctG);
+});
+scene.add(ctG);
+
+/* LETTER ON TABLE */
+var letterMesh=add(box(0.36,0.012,0.26,M.paper),0.1,0.424,-0.5);
+letterMesh.userData.isLetter=true;
+add(box(0.34,0.008,0.13,M.env),0.1,0.432,-0.44).rotation.x=-0.32;
+
+/* SIDE TABLE with lamp — right of sofa */
+var stG=new THREE.Group(); stG.position.set(-1.7,0,1.5);
+add(box(0.5,0.56,0.5,M.dkw),0,0.28,0,stG);
+add(box(0.52,0.05,0.52,M.wood),0,0.58,0,stG);
+var tlB=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.09,0.22,10),M.lmet);
+tlB.position.set(0,0.71,0); stG.add(tlB);
+var tlSh=new THREE.Mesh(new THREE.ConeGeometry(0.2,0.24,12,1,true),M.lshd);
+tlSh.rotation.x=Math.PI; tlSh.position.set(0,0.93,0); stG.add(tlSh);
+var tlBulb=new THREE.Mesh(new THREE.SphereGeometry(0.055,8,8),new THREE.MeshBasicMaterial({color:0x1a1008}));
+tlBulb.position.set(0,0.85,0); stG.add(tlBulb);
+scene.add(stG);
+
+/* BOOKSHELF — right corner of back wall */
+var bsG=new THREE.Group(); bsG.position.set(3.2,0,-3.5);
+add(box(1.1,2.2,0.38,M.dkw),0,1.1,0,bsG);
+[0.5,1.0,1.55,2.0].forEach(function(sy){add(box(1.0,0.04,0.34,M.wood),0,sy,0,bsG);});
+var bc=[0xaa3322,0x2244aa,0x228844,0xcc8822,0x884488];
+for(var bi=0;bi<5;bi++){
+  var bk=box(0.08,0.22+Math.random()*0.12,0.28,sm({color:bc[bi],roughness:.85}));
+  bk.position.set(-0.38+bi*0.16,0.65,0); bsG.add(bk);
+}
+scene.add(bsG);
+
+/* RUG — between sofa and TV */
+var rugM=new THREE.Mesh(new THREE.PlaneGeometry(3.5,3.8),M.rug);
+rugM.rotation.x=-Math.PI/2; rugM.position.set(0,0.005,-0.8); scene.add(rugM);
+
+/* ══════════════ COLLISION ══════════════
+   Obstacle boxes HANYA untuk bagian solid
+   yang beneran menghalangi — bukan seluruh
+   area furniture. Player harus bisa lewat
+   antara sofa dan meja kopi.
+══════════════════════════════════════ */
+var PR=0.28;
+var OBS=[
+  // Sofa — hanya base dan back panel (bukan seluruh area)
+  // seat base: x±1.5, z 1.1..2.0 (kedalaman 0.92)
+  {x0:-1.5, x1:1.5, z0:1.08, z1:2.0},
+  // sofa back panel: x±1.5, z 1.85..2.05 (tipis)
+  // sudah tercakup di atas, skip
+
+  // Coffee table — hanya kaki+top, tapi BUKAN terlalu lebar
+  // top: 1.35×0.68 centered at (0, z=-0.5)
+  {x0:-0.5, x1:0.5, z0:-0.84, z1:-0.16},
+
+  // TV cabinet: z=-3.76, depth 0.5, width 3.5
+  {x0:-1.85,x1:1.85, z0:-4.02,z1:-3.5},
+
+  // Bookshelf
+  {x0:2.65, x1:3.76, z0:-3.72,z1:-3.28},
+
+  // Side table
+  {x0:-2.0, x1:-1.4, z0:1.22, z1:1.78},
+];
+
+function resolvePos(p){
+  if(p.x<-3.72+PR)p.x=-3.72+PR;
+  if(p.x> 3.72-PR)p.x= 3.72-PR;
+  if(p.z<-3.72+PR)p.z=-3.72+PR;
+  if(p.z> 3.72-PR)p.z= 3.72-PR;
+  for(var i=0;i<OBS.length;i++){
+    var o=OBS[i];
+    if(p.x>o.x0-PR&&p.x<o.x1+PR&&p.z>o.z0-PR&&p.z<o.z1+PR){
+      var dL=p.x-(o.x0-PR),dR=(o.x1+PR)-p.x,dF=p.z-(o.z0-PR),dB=(o.z1+PR)-p.z;
+      var mn=Math.min(dL,dR,dF,dB);
+      if(mn===dL)p.x=o.x0-PR;
+      else if(mn===dR)p.x=o.x1+PR;
+      else if(mn===dF)p.z=o.z0-PR;
+      else p.z=o.z1+PR;
+    }
+  }
+  p.y=1.65;
+}
+
+/* ══════════════ MISSION SYSTEM ══════════════ */
+var missionEl=document.getElementById('mission-text');
+var MISSIONS=[
+  '',
+  'Nyalakan lampu — cari saklar di dinding kiri',
+  'Duduk di sofa',
+  'Baca surat di meja',
+  '',
+];
+function setMission(phase){
+  var txt=MISSIONS[phase]||'';
+  missionEl.textContent=txt;
+  document.getElementById('mission').style.opacity=txt?'1':'0';
+}
+
+/* ══════════════ INTERACTIONS ══════════════ */
+var hintEl=document.getElementById('hint');
+var curHint='';
+
+var IA=[
+  {
+    pos:new THREE.Vector3(SW_X,1.32,3.0),range:2.0,
+    label:'Nyalakan Lampu',
+    ok:function(){return G.phase===1&&!G.lampOn;},
+    fn:turnOnLamp
+  },
+  {
+    // Sofa interaction: besar banget biar bisa trigger dari depan sofa
+    pos:new THREE.Vector3(0,0.9,0.5),range:2.8,
+    label:'Duduk di Sofa',
+    ok:function(){return G.phase===2&&!G.seated;},
+    fn:sitOnSofa
+  },
+  {
+    // Surat: range lebar, posisi agak tinggi biar kedeteksi dari posisi berdiri
+    pos:new THREE.Vector3(0.1,0.8,-0.5),range:2.8,
+    label:'Baca Surat',
+    ok:function(){return G.phase===3&&!G.letterRead;},
+    fn:readLetter
+  },
+];
+
+function getBest(){
+  if(G.dialogOn||G.over)return null;
+  var best=null,bd=Infinity;
+  for(var i=0;i<IA.length;i++){
+    var ia=IA[i];if(!ia.ok())continue;
+    var d=cam.position.distanceTo(ia.pos);
+    if(d<ia.range&&d<bd){best=ia;bd=d;}
+  }
+  return best;
+}
+function checkHint(){
+  var b=getBest();
+  var lbl=b?'['+(MOBILE?'TAP':'E')+'] '+b.label:'';
+  if(lbl!==curHint){curHint=lbl;hintEl.textContent=lbl;hintEl.style.display=lbl?'block':'none';}
+}
+function doInteract(){
+  initAudio();
+  var b=getBest();if(b)b.fn();
+}
+
+/* ══════════════ LAMP ══════════════ */
+function turnOnLamp(){
+  if(G.lampOn)return;
+  G.lampOn=true;
+  playLampOn();
+  var t=0;
+  var iv=setInterval(function(){
+    t+=0.065;var p=Math.min(1,t);
+    ceilPL.intensity=4.5*p;
+    fillPL.intensity=2.5*p;
+    tablePL.intensity=1.8*p;
+    if(p>=1){
+      clearInterval(iv);
+      lampBulb.material.color.setHex(0xfffde0);
+      tlBulb.material.color.setHex(0xffe8a0);
+      swLed.material.color.setHex(0x00ee44);
+      ambDim.intensity=0.52;
+      G.phase=2;
+      setMission(2);
+      setTimeout(function(){showTip('Duduk di sofa…',3000);},600);
+    }
+  },28);
+}
+
+/* ══════════════ SIT ══════════════
+   Sofa faces -z, so sitting target:
+   position: (0, 0.9, 1.1) — on the seat, slightly forward
+   YAW: 0 (or Math.PI*2) — look toward -z = toward TV ✓
+══════════════════════════════════ */
+var SIT_POS=new THREE.Vector3(0,0.9,1.1);
+var SIT_YAW=0;       // facing -z = toward TV
+var SIT_PITCH=0.18;
+
+function sitOnSofa(){
+  if(G.seated)return;
+  G.seated=true;isSeated=true;
+  playClick();
+  var sp=cam.position.clone(),sy=YAW,spi=PITCH;
+  var dur=950,st=performance.now();
+  function af(now){
+    var p=Math.min(1,(now-st)/dur),e=1-Math.pow(1-p,3);
+    cam.position.lerpVectors(sp,SIT_POS,e);
+    // Interpolate yaw toward 0 (= face -z = toward TV)
+    var dy=SIT_YAW-sy;
+    // Normalize: pick shortest path
+    // SIT_YAW=0, but if player faces ~PI (facing -z), we need them to end at 0 or 2PI
+    // Actually: facing -z = yaw=0 (sin(0)=0, cos(0)=1, fwd=(0,0,-1)) ✓
+    // Player spawned with YAW=PI (facing +z = toward door initially wrong, let's check)
+    // cam fwd = (-sin(YAW), 0, -cos(YAW))
+    // YAW=0: fwd=(0,0,-1) = faces back wall / TV ✓
+    // YAW=PI: fwd=(0,0,+1) = faces front wall / door
+    // So sit target YAW=0 is correct for facing TV ✓
+    while(dy>Math.PI)dy-=Math.PI*2;
+    while(dy<-Math.PI)dy+=Math.PI*2;
+    YAW=sy+dy*e;
+    PITCH=spi+(SIT_PITCH-spi)*e;
+    if(p<1)requestAnimationFrame(af);
+    else{
+      YAW=SIT_YAW;PITCH=SIT_PITCH;
+      G.phase=3;setMission(3);
+      setTimeout(function(){showTip('Ada surat di meja…',3000);},700);
+    }
+  }
+  requestAnimationFrame(af);
+}
+
+/* ══════════════ LETTER ══════════════ */
+var LETTER=`Selamat Hari Raya Idul Fitri, ya…
+Mohon maaf lahir dan batin.
+
+Paman tahu Lebaran tahun ini mungkin terasa sepi buat kamu. Maafkan Paman, karena belum bisa ada di samping kamu hari ini. Bukan karena Paman tidak peduli, tapi keadaan membuat Paman harus tetap di sini bersama keluarga Paman.
+
+Meski kamu sekarang harus menjalani semuanya sendiri, ingat ya… kamu tidak benar-benar sendirian. Paman selalu mendoakan kamu dari jauh, berharap kamu tetap kuat, tetap sabar, dan tetap punya harapan.
+
+Kalau hari ini terasa berat, tidak apa-apa… itu wajar. Tapi jangan pernah berhenti percaya bahwa ke depan akan ada hari-hari yang lebih hangat dan penuh kebahagiaan.
+
+Nanti kalau ada kesempatan, Paman pasti datang dan kita bisa menghabiskan waktu bersama.
+
+Jaga diri baik-baik, ya.
+Paman selalu sayang kamu.`;
+
+var REPLY_LINES=[
+  'Iya, Paman…',
+  'Selamat Hari Raya Idul Fitri juga. Mohon maaf lahir dan batin.',
+  'Makasih ya, Paman… sudah ingat aku dan kirim pesan ini.',
+  'Jujur, itu sudah cukup bikin aku ngerasa nggak sendirian di hari yang biasanya ramai ini.',
+  'Kalau Paman minta maaf… aku juga mau minta maaf.',
+  'Maaf kalau selama ini aku pernah bikin Paman kecewa.',
+  'Dulu aku sering mikir, masih ada waktu…',
+  'Masih bisa kumpul lagi, masih bisa merasakan Lebaran seperti dulu.',
+  'Tapi sekarang aku ngerti, ternyata nggak semua hal nunggu kita.',
+  'Lebaran kali ini terasa sepi banget…',
+  'Aku kangen mereka, Paman…',
+  'Kangen keluarga yang dulu selalu ada, yang sekarang cuma bisa aku ingat lewat kenangan.',
+  'Kadang aku kepikiran, andai waktu bisa diulang…',
+  'Aku ingin duduk lebih lama bersama mereka,',
+  'Nggak menganggap hal-hal kecil itu biasa saja.',
+  'Sekarang baru terasa… yang dulu sederhana, ternyata paling berharga.',
+  'Aku akan coba tetap kuat, Paman… seperti yang Paman bilang.',
+  'Walaupun rindu ini nggak selalu bisa hilang.',
+  'Paman jaga diri baik-baik ya.',
+  'Makasih sudah tetap peduli… itu berarti banyak buat aku.',
+];
+
+function readLetter(){
+  if(G.letterRead)return;
+  G.letterRead=true;G.phase=4;
+  playClick();
+  document.getElementById('lbody').textContent=LETTER;
+  document.getElementById('lw').style.display='flex';
+}
+
+document.getElementById('lbtn').addEventListener('click',function(){
+  document.getElementById('lw').style.display='none';
+  setMission(4);
+  setTimeout(function(){
+    showDialogLines(REPLY_LINES,3800,function(){
+      G.over=true;showCredits();
+    });
+  },400);
+});
+
+/* ══════════════ MUSIC PLAYER ══════════════ */
+var bgMusic = null;
+
+function playBgMusic(cb) {
+  bgMusic = new Audio('musik.mp3');
+  bgMusic.volume = 0;
+  bgMusic.play().then(function() {
+    // Fade in music over 2s
+    var vol = 0;
+    var fadeIn = setInterval(function() {
+      vol += 0.04;
+      if (vol >= 0.85) { vol = 0.85; clearInterval(fadeIn); }
+      bgMusic.volume = vol;
+    }, 80);
+    if (cb) cb();
+  }).catch(function() {
+    // Music failed (e.g. file missing) — continue anyway
+    if (cb) cb();
+  });
+}
+
+function fadeMusicOut(dur) {
+  if (!bgMusic) return;
+  var startVol = bgMusic.volume;
+  var steps = 30;
+  var stepTime = dur / steps;
+  var step = 0;
+  var iv = setInterval(function() {
+    step++;
+    bgMusic.volume = Math.max(0, startVol * (1 - step / steps));
+    if (step >= steps) {
+      clearInterval(iv);
+      bgMusic.pause();
+      bgMusic = null;
+    }
+  }, stepTime);
+}
+
+/* ══════════════ MORAL + CREDITS ══════════════
+   49 detik musik dibagi ke 10 segmen pesan moral.
+   Tiap segmen: fade in teks → tahan → fade out → segmen berikutnya.
+   Timeline (detik dari musik mulai):
+     0-5   : segmen 1
+     5-10  : segmen 2
+     10-15 : segmen 3
+     15-20 : segmen 4
+     20-25 : segmen 5
+     25-30 : segmen 6
+     30-34 : segmen 7
+     34-38 : segmen 8
+     38-43 : segmen 9
+     43-46 : segmen 10
+     46-49 : fade out → credits
+══════════════════════════════════════════════ */
+var MORAL_SEGMENTS = [
+  { t: 0,    text: 'Lebaran bukan hanya tentang baju baru\natau ketupat yang tersaji di meja makan.' },
+  { t: 5000, text: 'Lebaran adalah tentang hati yang kembali bersih,\ntentang maaf yang tulus diucapkan.' },
+  { t: 10000,text: 'Tentang mereka yang kita rindukan…\ndan kenangan yang tidak pernah benar-benar pergi.' },
+  { t: 15000,text: 'Kadang kita terlalu sibuk\nuntuk sekadar duduk bersama.' },
+  { t: 20000,text: 'Terlalu yakin masih ada waktu,\nmasih ada Lebaran berikutnya.' },
+  { t: 25000,text: 'Padahal waktu tidak pernah menunggu.\nDan momen itu… tidak selalu kembali.' },
+  { t: 30000,text: 'Jika hari ini terasa sepi,\ningatlah —' },
+  { t: 34000,text: 'Rindu adalah bukti\nbahwa kita pernah dicintai.' },
+  { t: 38000,text: 'Jaga mereka yang masih ada.\nHargai waktu yang tersisa bersama.' },
+  { t: 43000,text: 'Minal Aidin Wal Faizin.\nMohon maaf lahir dan batin. 🌙' },
+];
+
+var FADE_DUR = 700; // ms untuk tiap fade in/out
+
+function runMoralSegments(moralEl, onDone) {
+  var linesEl = document.getElementById('moral-lines');
+
+  MORAL_SEGMENTS.forEach(function(seg, idx) {
+    var nextT = MORAL_SEGMENTS[idx + 1] ? MORAL_SEGMENTS[idx + 1].t : 46000;
+    var holdDur = (nextT - seg.t) - FADE_DUR * 2;
+    if (holdDur < 400) holdDur = 400;
+
+    setTimeout(function() {
+      // Set text, fade in
+      linesEl.style.transition = 'none';
+      linesEl.style.opacity = '0';
+      linesEl.textContent = seg.text;
+      // Force reflow
+      linesEl.offsetHeight;
+      linesEl.style.transition = 'opacity ' + FADE_DUR + 'ms ease';
+      linesEl.style.opacity = '1';
+
+      // Fade out before next segment
+      setTimeout(function() {
+        linesEl.style.transition = 'opacity ' + FADE_DUR + 'ms ease';
+        linesEl.style.opacity = '0';
+      }, FADE_DUR + holdDur);
+
+    }, seg.t);
+  });
+
+  // After last segment fades out
+  setTimeout(onDone, 46000 + FADE_DUR);
+}
+
+function showCredits() {
+  var fd = document.getElementById('fade');
+
+  // Step 1: Fade to black
+  fd.style.transition = 'opacity 2s ease';
+  fd.style.opacity = 1;
+
+  setTimeout(function() {
+    // Step 2: Play music
+    playBgMusic(function() {
+      var moral = document.getElementById('moral');
+      var linesEl = document.getElementById('moral-lines');
+      linesEl.style.opacity = '0';
+      linesEl.textContent = '';
+      moral.style.display = 'flex';
+
+      // Fade in moral screen background
+      fd.style.transition = 'opacity 1.5s ease';
+      fd.style.opacity = 0;
+      setTimeout(function() { moral.style.opacity = 1; }, 100);
+
+      // Step 3: Run timed moral segments
+      runMoralSegments(moral, function() {
+        // Fade out music (last 3s)
+        fadeMusicOut(3000);
+
+        // Fade screen to black then show credits
+        setTimeout(function() {
+          moral.style.opacity = 0;
+          fd.style.transition = 'opacity 1.5s ease';
+          fd.style.opacity = 1;
+
+          setTimeout(function() {
+            moral.style.display = 'none';
+            var cr = document.getElementById('credits');
+            cr.style.display = 'flex';
+            fd.style.transition = 'opacity 2s ease';
+            fd.style.opacity = 0;
+            setTimeout(function() { cr.style.opacity = 1; }, 200);
+          }, 1600);
+        }, 500);
+      });
+    });
+  }, 2200);
+}
+
+/* ══════════════ DIALOG ══════════════ */
+var dtEl=document.getElementById('dtext');
+function showDialogLines(lines,dur,cb){
+  G.dialogOn=true;var i=0;
+  function nx(){
+    if(i>=lines.length){dtEl.style.display='none';G.dialogOn=false;if(cb)cb();return;}
+    dtEl.textContent='\u201c'+lines[i]+'\u201d';dtEl.style.display='inline-block';
+    i++;setTimeout(nx,dur);
+  }
+  nx();
+}
+function showTip(msg,dur){
+  hintEl.textContent=msg;hintEl.style.display='block';curHint=msg;
+  setTimeout(function(){if(hintEl.textContent===msg){hintEl.style.display='none';curHint='';}},dur||3000);
+}
+
+/* ══════════════ BLINK ══════════════ */
+function doBlink(dur,cb){
+  var bt=document.getElementById('bt'),bb=document.getElementById('bb');
+  var t=(dur*.4)+'ms';
+  bt.style.transition='height '+t+' ease-in';bb.style.transition='height '+t+' ease-in';
+  bt.style.height='50vh';bb.style.height='50vh';
+  setTimeout(function(){
+    bt.style.transition='height '+t+' ease-out';bb.style.transition='height '+t+' ease-out';
+    bt.style.height='0';bb.style.height='0';
+    if(cb)setTimeout(cb,dur*.4);
+  },dur*.6);
+}
+
+/* ══════════════ KEYBOARD ══════════════ */
+document.addEventListener('keydown',function(e){
+  keys[e.code]=true;
+  if(e.code==='KeyE'||e.code==='Space'){initAudio();doInteract();}
+});
+document.addEventListener('keyup',function(e){keys[e.code]=false;});
+
+/* ══════════════ MOUSE ══════════════ */
+document.getElementById('c').addEventListener('mousedown',function(e){
+  mDown=true;mX=e.clientX;mY=e.clientY;mDrag=false;
+  initAudio();
+});
+window.addEventListener('mouseup',function(){mDown=false;});
+window.addEventListener('mousemove',function(e){
+  if(!mDown)return;
+  var dx=e.clientX-mX,dy=e.clientY-mY;
+  if(Math.abs(dx)>3||Math.abs(dy)>3)mDrag=true;
+  YAW-=dx*.003;
+  PITCH=Math.max(-0.92,Math.min(0.88,PITCH-dy*.003));
+  mX=e.clientX;mY=e.clientY;
+});
+document.getElementById('c').addEventListener('click',function(){if(!mDrag)doInteract();});
+
+/* ══════════════ MOBILE ══════════════ */
+if(MOBILE){
+  document.getElementById('jzone').style.display='block';
+  document.getElementById('tapbtn').style.display='flex';
+}
+var jZone=document.getElementById('jzone');
+var jKnob=document.getElementById('jknob');
+
+jZone.addEventListener('touchstart',function(e){
+  e.preventDefault();e.stopPropagation();initAudio();
+  var t=e.changedTouches[0];
+  jActive=true;jTid=t.identifier;jDelta={x:0,y:0};
+  jKnob.style.transform='translate(-50%,-50%)';
+},{passive:false});
+
+jZone.addEventListener('touchmove',function(e){
+  e.preventDefault();e.stopPropagation();
+  for(var i=0;i<e.changedTouches.length;i++){
+    var t=e.changedTouches[i];if(t.identifier!==jTid)continue;
+    var r=jZone.getBoundingClientRect();
+    var cx=r.left+r.width/2,cy=r.top+r.height/2;
+    var dx=t.clientX-cx,dy=t.clientY-cy;
+    var MAX=38,len=Math.sqrt(dx*dx+dy*dy);
+    if(len>MAX){dx*=MAX/len;dy*=MAX/len;}
+    jDelta={x:dx/MAX,y:dy/MAX};
+    jKnob.style.transform='translate(calc(-50% + '+dx+'px),calc(-50% + '+dy+'px))';
+  }
+},{passive:false});
+
+function jEnd(e){
+  e.preventDefault();e.stopPropagation();
+  for(var i=0;i<e.changedTouches.length;i++){
+    if(e.changedTouches[i].identifier===jTid){
+      jActive=false;jTid=-1;jDelta={x:0,y:0};
+      jKnob.style.transform='translate(-50%,-50%)';
+    }
+  }
+}
+jZone.addEventListener('touchend',jEnd,{passive:false});
+jZone.addEventListener('touchcancel',jEnd,{passive:false});
+
+document.getElementById('c').addEventListener('touchstart',function(e){
+  initAudio();
+  for(var i=0;i<e.changedTouches.length;i++){
+    var t=e.changedTouches[i];
+    if(lTid===-1){lTid=t.identifier;lLast={x:t.clientX,y:t.clientY};lDrag=false;}
+  }
+},{passive:true});
+
+document.getElementById('c').addEventListener('touchmove',function(e){
+  for(var i=0;i<e.changedTouches.length;i++){
+    var t=e.changedTouches[i];if(t.identifier!==lTid)continue;
+    var dx=t.clientX-lLast.x,dy=t.clientY-lLast.y;
+    if(Math.abs(dx)>4||Math.abs(dy)>4)lDrag=true;
+    YAW-=dx*.0045;
+    PITCH=Math.max(-0.92,Math.min(0.88,PITCH-dy*.0045));
+    lLast={x:t.clientX,y:t.clientY};
+  }
+},{passive:true});
+
+document.getElementById('c').addEventListener('touchend',function(e){
+  for(var i=0;i<e.changedTouches.length;i++){
+    var t=e.changedTouches[i];if(t.identifier!==lTid)continue;
+    lTid=-1;if(!lDrag)doInteract();
+  }
+},{passive:true});
+
+document.getElementById('tapbtn').addEventListener('touchstart',function(e){
+  e.preventDefault();e.stopPropagation();initAudio();doInteract();
+},{passive:false});
+
+/* ══════════════ MAIN LOOP ══════════════ */
+var clock=new THREE.Clock();
+var wasMoving=false;
+
+function update(dt){
+  if(G.over)return;
+
+  var moving=false;
+  if(!isSeated){
+    var spd=3.0*dt;
+    var fwd=new THREE.Vector3(-Math.sin(YAW),0,-Math.cos(YAW));
+    var rgt=new THREE.Vector3( Math.cos(YAW),0,-Math.sin(YAW));
+    var mv=new THREE.Vector3();
+    if(keys['KeyW']||keys['ArrowUp'])   mv.addScaledVector(fwd, spd);
+    if(keys['KeyS']||keys['ArrowDown']) mv.addScaledVector(fwd,-spd);
+    if(keys['KeyA']||keys['ArrowLeft']) mv.addScaledVector(rgt,-spd);
+    if(keys['KeyD']||keys['ArrowRight'])mv.addScaledVector(rgt, spd);
+    if(jActive){
+      mv.addScaledVector(fwd,-jDelta.y*spd*1.5);
+      mv.addScaledVector(rgt, jDelta.x*spd*1.5);
+    }
+    if(mv.lengthSq()>0){
+      cam.position.add(mv);
+      resolvePos(cam.position);
+      moving=true;
+    }
+  }
+
+  // Footstep sound
+  if(moving&&actx){
+    footTimer-=dt;
+    if(footTimer<=0){
+      playFootstep();
+      footTimer=footInterval;
+    }
+  } else {
+    footTimer=0;
+  }
+
+  cam.rotation.order='YXZ';
+  cam.rotation.y=YAW;
+  cam.rotation.x=PITCH;
+
+  // Lamp flicker
+  if(G.lampOn){
+    var t=clock.getElapsedTime();
+    ceilPL.intensity=4.5*(1+Math.sin(t*2.1)*.011);
+    fillPL.intensity=2.5*(1+Math.sin(t*1.7+1)*.009);
+    tablePL.intensity=1.8*(1+Math.sin(t*1.9+2)*.014);
+  }
+
+  checkHint();
+  wasMoving=moving;
+}
+
+function loop(){
+  requestAnimationFrame(loop);
+  var dt=Math.min(clock.getDelta(),.05);
+  update(dt);
+  renderer.render(scene,cam);
+}
+
+/* ══════════════ RESIZE ══════════════ */
+window.addEventListener('resize',function(){
+  cam.aspect=innerWidth/innerHeight;
+  cam.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+
+/* ══════════════ START ══════════════ */
+function startGame(){
+  var ld=document.getElementById('loading');
+  ld.style.transition='opacity 1s ease';ld.style.opacity=0;
+  setTimeout(function(){ld.style.display='none';},1000);
+  var fd=document.getElementById('fade');
+  fd.style.transition='opacity 2.5s ease';fd.style.opacity=0;
+  clock.start();
+  loop();
+  document.getElementById('mission').style.opacity='0';
+
+  setTimeout(function(){
+    showDialogLines(
+      ['aku pulang..','sekarang rumah sepi ya..'],
+      3200,
+      function(){
+        G.phase=1;
+        setMission(1);
+      }
+    );
+  },1200);
+}
+
+var lfill=document.getElementById('lfill'),lp=0;
+var lint=setInterval(function(){
+  lp+=Math.random()*13+5;
+  if(lp>=100){lp=100;clearInterval(lint);setTimeout(startGame,350);}
+  lfill.style.width=lp+'%';
+},100);
+</script>
+</body>
+</html>
